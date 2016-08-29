@@ -19,10 +19,22 @@ class MysqlAbacLoader extends FileLoader
     
     public function load($resource, $type = null)
     {
-        $result = $this->CI->db
-            ->select('policy')
-            ->where('resource', $resource)
-            ->get('abac_policy');
+        list($server, $resource) = explode(',', $resource);
+		
+		if($server == 1) {
+			$result = $this->CI->db
+				->select('policy')
+				->where('server', $server)
+				->where('resource', $resource)
+				->get('abac_policy');
+		}
+		else {
+			$result = $this->CI->db
+				->select('policy')
+				->where('server', $server)
+				->like('controller', $resource, 'before')
+				->get('abac_policy');
+		}
         
         return ($result->num_rows() === 0) ? false : json_decode($result->row()->policy, true);
     }
