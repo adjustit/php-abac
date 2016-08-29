@@ -97,7 +97,8 @@ class AttributeManager
         $propertyValue = $object;
         foreach($propertyPath as $property) {
             $getter = 'get'.ucfirst($property);
-            if(!method_exists($propertyValue, $getter)) {
+            //if(!method_exists($propertyValue, $getter)) {
+			if(!is_callable(array($propertyValue, $getter))) {
                 throw new \InvalidArgumentException('There is no getter for the "'.$attribute->getProperty().'" attribute for object "'.get_class($propertyValue).'"');
             }
             if (($propertyValue = $propertyValue->{$getter}()) === null) {

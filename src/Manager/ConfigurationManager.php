@@ -1,7 +1,7 @@
 <?php
-
 namespace PhpAbac\Manager;
 
+use PhpAbac\Loader\MysqlAbacLoader;
 use PhpAbac\Loader\YamlAbacLoader;
 
 use Symfony\Component\Config\FileLocatorInterface;
@@ -22,20 +22,23 @@ class ConfigurationManager {
      * @param FileLocatorInterface $locator
      * @param string $format
      */
-    public function __construct(FileLocatorInterface $locator, $format = 'yaml') {
+    public function __construct(FileLocatorInterface $locator, $format = 'mysql') {
+        
         $this->locator = $locator;
         $this->format = $format;
         $this->attributes = [];
         $this->rules = [];
-        $this->loaders['yaml'] = new YamlAbacLoader($locator);
+        $this->loaders['mysql'] = new MysqlAbacLoader($locator);
     }
     
     /**
      * @param array $configurationFiles
      */
     public function parseConfigurationFile($configurationFiles) {
+        
         foreach($configurationFiles as $configurationFile) {
             $config = $this->loaders[$this->format]->load($configurationFile);
+            
             if(isset($config['attributes'])) {
                 $this->attributes = array_merge($this->attributes, $config['attributes']);
             }

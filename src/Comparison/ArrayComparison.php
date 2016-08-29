@@ -54,6 +54,7 @@ class ArrayComparison extends AbstractComparison
      * @return boolean
      */
     public function contains($policyRuleAttributes, $attributes, $extraData = []) {
+        
         foreach($extraData['attribute']->getValue() as $attribute) {
             $result = true;
             foreach($policyRuleAttributes as $pra) {
