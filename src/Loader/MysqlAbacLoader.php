@@ -3,7 +3,6 @@
 namespace PhpAbac\Loader;
 
 use Symfony\Component\Config\Loader\FileLoader;
-use Symfony\Component\Yaml\Yaml;
 
 class MysqlAbacLoader extends FileLoader
 {
@@ -19,7 +18,7 @@ class MysqlAbacLoader extends FileLoader
     
     public function load($resource, $type = null)
     {
-        list($server, $resource) = explode(',', $resource);
+		list($server, $resource) = explode(',', $resource);
 		
 		if($server == 1) {
 			$result = $this->CI->db
@@ -35,12 +34,24 @@ class MysqlAbacLoader extends FileLoader
 				->like('controller', $resource, 'before')
 				->get('abac_policy');
 		}
-        
-        return ($result->num_rows() === 0) ? false : json_decode($result->row()->policy, true);
+
+        return $this->_parse_policy($result);
     }
 
     public function supports($resource, $type = null)
     {
         return is_string($resource);
     }
+	
+	private function _parse_policy($policy)
+	{
+		if($policy->num_rows() === 0) {
+			$policy = $this->CI->db
+				->select('policy')
+				->where('id', 0)
+				->get('abac_policy');
+		}
+		
+		return json_decode($policy->row()->policy, true);
+	}
 }
