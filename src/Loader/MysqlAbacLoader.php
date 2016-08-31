@@ -4,36 +4,48 @@ namespace PhpAbac\Loader;
 
 use Symfony\Component\Config\Loader\FileLoader;
 
+/**
+ * @description A CodeIgniter-based handler for loading ABAC policies from MySQL instead of YAML
+ * @requires CodeIgniter >= 2.2.x
+ * @requires MySQL DB `x`.`abac_policy`
+ * @author benjamin.alldridge <ben.alldridge@aamcommercial.com.au>
+ * @link http://github.com/adjustit/php-abac
+ */
+
 class MysqlAbacLoader extends FileLoader
 {
     
     private $CI;
     
-    public function __construct($input) {
+    /**
+     * build our ABAC MySQL object up via Symfony FileLoader
+     * @private
+     * @param [object] $input
+     */
+    public function __construct($input)
+	{
         parent::__construct($input);
         
         $this->CI =& get_instance();
         $this->CI->load->database('db_read');
     }
     
+    /**
+     * handle our MySQL ABAC policy recall
+     * @param  [string] $resource      the resource name coupled with resource location
+     *                                 accepts <location>,<resource> format                                        
+     * @param  [string] [$type         = null]
+     * @return [object] the policy contents
+     */
     public function load($resource, $type = null)
     {
 		list($server, $resource) = explode(',', $resource);
 		
-		if($server == 1) {
-			$result = $this->CI->db
-				->select('policy')
-				->where('server', $server)
-				->where('resource', $resource)
-				->get('abac_policy');
-		}
-		else {
-			$result = $this->CI->db
-				->select('policy')
-				->where('server', $server)
-				->like('controller', $resource, 'before')
-				->get('abac_policy');
-		}
+		$result = $this->CI->db
+			->select('policy')
+			->where('server', $server)
+			->where('resource', $resource)
+			->get('abac_policy');
 
         return $this->_parse_policy($result);
     }
@@ -43,6 +55,12 @@ class MysqlAbacLoader extends FileLoader
         return is_string($resource);
     }
 	
+	/**
+	 * handle the policy to either be the valid policy or a default-false policy
+	 * @private
+	 * @param  [object] $policy the raw MySQL object returned by CI AR
+	 * @return [array] a JSON-decoded array representation of the policy
+	 */
 	private function _parse_policy($policy)
 	{
 		if($policy->num_rows() === 0) {
