@@ -52,13 +52,13 @@ class ComparisonManager {
         ;
         // Checking that the configured comparison type is available
         if(!isset($this->comparisons[$pra->getComparisonType()])) {
-            throw new \InvalidArgumentException('The requested comparison class does not exist');
+            throw new \InvalidArgumentException("The requested comparison class '{$pra->getComparisonType()}' does not exist");
         }
         // The comparison class will perform the attribute check with the configured method
         // For more complex comparisons, the comparison manager is injected
         $comparison = new $this->comparisons[$pra->getComparisonType()]($this);
         if(!method_exists($comparison, $pra->getComparison())) {
-            throw new \InvalidArgumentException('The requested comparison method does not exist');
+            throw new \InvalidArgumentException("The requested comparison '{$pra->getComparisonType()}:{$pra->getComparison()}' method does not exist");
         }
         // Then the comparison is performed with needed
         $result = $comparison->{$pra->getComparison()}($praValue, $attribute->getValue(), $pra->getExtraData());
