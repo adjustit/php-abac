@@ -66,6 +66,20 @@ class Abac
      * @param object $resource
      * @param array $options
      * @return boolean|array
+	 *
+	 * ** AND/OR Logical Operand **
+	 * @lastmodifiedDate 2016-10-19
+	 *  
+	 * Assesses internally if there is a comparison_operand parameter in $extraData.
+	 * Available comparison operand options are :
+	 * * and
+	 * * or
+	 *
+	 * This operand flag functions as a logical and/or escape. The default is to 
+	 * compound individual comparisons as a logical and, ie. comparisons are 
+	 * additional to each previous comparison. The logical or escapes the enforce
+	 * method as TRUE once unsetting the applicable rejected attributes from the 
+	 * Comparison Manager via unsetRejected().
      */
     public function enforce($ruleName, $user, $resource = null, $options = []) {
         // If there is dynamic attributes, we pass them to the comparison manager
@@ -86,19 +100,37 @@ class Abac
             }
         }
         $policyRule = $this->policyRuleManager->getRule($ruleName);
+		
         // For each policy rule attribute, we retrieve the attribute value and proceed configured extra data
         foreach ($policyRule->getPolicyRuleAttributes() as $pra) {
-            $attribute = $pra->getAttribute();
-            $attribute->setValue($this->attributeManager->retrieveAttribute($attribute, $user, $resource));
+			$attribute = $pra->getAttribute();
+			
+			$attribute->setValue($this->attributeManager->retrieveAttribute($attribute, $user, $resource));
             if(count($pra->getExtraData()) > 0) {
                 $this->processExtraData($pra, $user, $resource);
             }
-            $this->comparisonManager->compare($pra);
+			
+			$extraData = $pra->getExtraData();
+						
+			if(isset($extraData['comparison_operand']) && $extraData['comparison_operand'] === 'or') {
+				$comparisonTest = $this->comparisonManager->compare($pra);
+				
+				if($comparisonTest === TRUE) {
+					$this->comparisonManager->unsetRejected();
+					
+					return TRUE;
+				}
+				
+			}
+			else {
+				$this->comparisonManager->compare($pra);
+			}
         }
         // The given result could be an array of rejected attributes or true
         // True means that the rule is correctly enforced for the given user and resource
         $result = $this->comparisonManager->getResult();
-        if($cacheResult) {
+		
+		if($cacheResult) {
             $cacheItem->set($result);
             $this->cacheManager->save($cacheItem);
         }

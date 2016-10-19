@@ -129,4 +129,11 @@ class ComparisonManager {
         $this->rejectedAttributes = [];
         return $result;
     }
+	
+	/**
+	 * Reset the rejectedAttributes to an empty array
+	 */
+	public function unsetRejected() {
+		$this->rejectedAttributes = array();
+	}
 }
