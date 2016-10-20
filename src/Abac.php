@@ -68,7 +68,7 @@ class Abac
      * @return boolean|array
 	 *
 	 * ** AND/OR Logical Operand **
-	 * @lastmodifiedDate 2016-10-19
+	 * @lastmodifiedDate 2016-10-20
 	 *  
 	 * Assesses internally if there is a comparison_operand parameter in $extraData.
 	 * Available comparison operand options are :
@@ -79,7 +79,8 @@ class Abac
 	 * compound individual comparisons as a logical and, ie. comparisons are 
 	 * additional to each previous comparison. The logical or escapes the enforce
 	 * method as TRUE once unsetting the applicable rejected attributes from the 
-	 * Comparison Manager via unsetRejected().
+	 * Comparison Manager via unsetRejected() once one of the assessed attributes
+	 * returns a TRUE evaluation.
      */
     public function enforce($ruleName, $user, $resource = null, $options = []) {
         // If there is dynamic attributes, we pass them to the comparison manager
@@ -110,19 +111,27 @@ class Abac
                 $this->processExtraData($pra, $user, $resource);
             }
 			
+			// Get the extra data attributes for a rule
 			$extraData = $pra->getExtraData();
 						
+			// Assess if comparison_operand exists and if it evaluates bitwise to 'or'
 			if(isset($extraData['comparison_operand']) && $extraData['comparison_operand'] === 'or') {
 				$comparisonTest = $this->comparisonManager->compare($pra);
 				
+				// If the comparison test returns TRUE, unset the rejected elements and 
+				// exit the loop by returning TRUE
 				if($comparisonTest === TRUE) {
 					$this->comparisonManager->unsetRejected();
 					
+					if($cacheResult) {
+						$cacheItem->set(TRUE);
+						$this->cacheManager->save($cacheItem);
+					}
+					
 					return TRUE;
-				}
-				
+				}				
 			}
-			else {
+			else { // Otherwise continue as normal in compounding rules
 				$this->comparisonManager->compare($pra);
 			}
         }
