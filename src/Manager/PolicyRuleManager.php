@@ -11,6 +11,8 @@ class PolicyRuleManager
     private $attributeManager;
     /** @var array **/
     private $rules;
+	/** @var array **/
+    public $ruleKeys;
 
     /**
      * @param \PhpAbac\Manager\AttributeManager $attributeManager
@@ -20,6 +22,7 @@ class PolicyRuleManager
     {
         $this->attributeManager = $attributeManager;
         $this->rules = $rules;
+		$this->ruleKeys = array_keys($rules);
     }
 
     /**

@@ -173,4 +173,12 @@ class Abac
             }
         }
     }
+	
+	/**
+	 * Return a world-accessible list of rule keys 
+	 * @return array
+	 */
+	public function getPolicyRuleManagerRuleKeys() {
+		return $this->policyRuleManager->ruleKeys;
+	}
 }
