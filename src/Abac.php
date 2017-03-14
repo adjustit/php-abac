@@ -14,6 +14,7 @@ use PhpAbac\Model\PolicyRuleAttribute;
 
 class Abac
 {
+	public $codeVersion = '2.1.2.1-adjustit';	
     /** @var \PhpAbac\Manager\ConfigurationManager **/
     private $configuration;
     /** @var \PhpAbac\Manager\PolicyRuleManager **/
