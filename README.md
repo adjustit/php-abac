@@ -56,6 +56,7 @@ Documentation
 * [Configuration](doc/configuration.md)
 * [Access-control](doc/access-control.md)
 * [Comparisons](doc/comparisons.md)
+* [Caching](doc/caching.md)
 
 Usage Examples
 -------------
@@ -139,6 +140,47 @@ $check = $abac->enforce('edit-group', $user, $group, [
 ]);
 ```
 
+**Example with referenced attributes**
+
+The configuration shall be :
+
+```yaml
+attributes:
+    group:
+        class: MyApp\Model\Group
+        type: resource
+        fields:
+            author.id:
+                name: Author ID
+    app_user:
+        class: MyApp\Model\User
+        type: user
+        fields:
+            id:
+                name: User ID
+
+rules:
+    remove-group:
+        attributes:
+            app_user.id:
+                comparison: object
+                comparison_type: isFieldEqual
+                value: group.author.id
+```
+And then the code :
+
+```php
+<?php
+
+use PhpAbac\Abac;
+
+$abac = new Abac([
+    'policy_rule_configuration.yml'
+]);
+$check = $abac->enforce('remove-group', $user, $group);
+```
+
+
 **Example with cache**
 ```php
 $check = $abac->enforce('edit-group', $user, $group, [
@@ -147,6 +189,82 @@ $check = $abac->enforce('edit-group', $user, $group, [
     'cache_driver' => 'memory' // memory is the default driver, you can avoid this option
 ]);
 ```
+
+**Example with multiple rules (ruleSet) for an unique rule.**
+Each rule are tested and the treatment stop when the first rule of the ruleSet allow access
+
+The configuration shall be (alcoolaw.yml):
+
+```yaml
+attributes:
+    main_user:
+        class: PhpAbac\Example\User
+        type: user
+        fields:
+            age:
+                name: Age
+            country:
+                name: Code ISO du pays
+rules:
+    alcoollaw:
+        -
+            attributes:
+                main_user.age:
+                    comparison_type: numeric
+                    comparison: isGreaterThan
+                    value: 18
+                main_user.country:
+                    comparison_type: string
+                    comparison: isEqual
+                    value: FR
+        -
+            attributes:
+                main_user.age:
+                    comparison_type: numeric
+                    comparison: isGreaterThan
+                    value: 21
+                main_user.country:
+                    comparison_type: string
+                    comparison: isNotEqual
+                    value: FR
+
+```
+
+And then the code :
+
+```php
+<?php
+
+use PhpAbac\Abac;
+
+$abac = new Abac([
+    'alcoollaw.yml'
+]);
+$check = $abac->enforce('alcoollaw', $user);
+```
+
+**Example with rules root directory passed to Abac class.**
+This feature allow to give a policy definition rules directory path directly to the Abac class without adding to all files :
+ 
+Considering we have 3 yaml files :
+- rest/conf/policy/user_def.yml
+- rest/conf/policy/gunlaw.yml 
+
+The php code can be :
+```php
+<?php
+
+use PhpAbac\Abac;
+
+$abac = new Abac([
+    'user_def.yml',
+    'gunlaw.yml',
+],[],'rest/conf/policy/');
+$check = $abac->enforce('gunlaw', $user);
+ 
+```
+
+
 
 Contribute
 ----------

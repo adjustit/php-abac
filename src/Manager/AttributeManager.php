@@ -10,15 +10,34 @@ class AttributeManager
 {
     /** @var array **/
     private $attributes;
+    
+    /** @var string Prefix to add before getter name (default)'get' */
+    private $getter_prefix = 'get';
+    /** @var string Function to apply on the getter name ( before adding prefix ) (default)'ucfirst' */
+    private $getter_name_transformation_function = 'ucfirst';
+    
 
     /**
      * @param array $attributes
+	 * @param array $options           A List of option to configure This Abac Instance
+	 *                                 Options list :
+	 *                                 'getter_prefix' => Prefix to add before getter name (default)'get'
+	 *                                 'getter_name_transformation_function' => Function to apply on the getter name ( before adding prefix ) (default)'ucfirst'
      */
-    public function __construct($attributes)
+    public function __construct($attributes, $options = [])
     {
         $this->attributes = $attributes;
+	
+		$options = array_intersect_key( $options, array_flip( [
+			'getter_prefix',
+			'getter_name_transformation_function',
+		] ) );
+		
+		foreach($options as $name => $value) {
+			$this->$name = $value;
+		}
     }
-    
+
     /**
      * @param string $attributeId
      * @return \PhpAbac\Model\AbstractAttribute
@@ -36,7 +55,7 @@ class AttributeManager
             : $this->getClassicAttribute($attributeData, $attributeName)
         ;
     }
-    
+
     /**
      * @param array $attributeData
      * @param string $property
@@ -51,7 +70,7 @@ class AttributeManager
             ->setSlug($this->slugify($attributeData['fields'][$property]['name']))
         ;
     }
-    
+
     /**
      * @param array $attributeData
      * @param string $key
@@ -74,11 +93,11 @@ class AttributeManager
      * @param object $object
      * @return mixed
      */
-    public function retrieveAttribute(AbstractAttribute $attribute, $user, $object = null)
+    public function retrieveAttribute(AbstractAttribute $attribute, $user = null, $object = null, $getter_params = [])
     {
         switch($attribute->getType()) {
             case 'user':
-                return $this->retrieveClassicAttribute($attribute, $user);
+                return $this->retrieveClassicAttribute($attribute, $user, $getter_params);
             case 'resource':
                 return $this->retrieveClassicAttribute($attribute, $object);
             case 'environment':
@@ -91,32 +110,37 @@ class AttributeManager
      * @param object $object
      * @return mixed
      */
-    private function retrieveClassicAttribute(Attribute $attribute, $object)
+    private function retrieveClassicAttribute(Attribute $attribute, $object, $getter_params = [])
     {
         $propertyPath = explode('.', $attribute->getProperty());
         $propertyValue = $object;
         foreach($propertyPath as $property) {
-            $getter = 'get'.ucfirst($property);
-            //if(!method_exists($propertyValue, $getter)) {
-			if(!is_callable(array($propertyValue, $getter))) {
-                throw new \InvalidArgumentException('There is no getter for the "'.$attribute->getProperty().'" attribute for object "'.get_class($propertyValue).'"');
+        	
+			$getter = $this->getter_prefix.call_user_func($this->getter_name_transformation_function,$property);
+            // Use is_callable, instead of method_exists, to deal with __call magic method
+            if(!is_callable([$propertyValue,$getter])) {
+                throw new \InvalidArgumentException('There is no getter for the "'.$attribute->getProperty().'" attribute for object "'.get_class($propertyValue).'" with getter "'.$getter.'"');
             }
-            if (($propertyValue = $propertyValue->{$getter}()) === null) {
-                return null;
-            }
+			if ( ( $propertyValue = call_user_func_array( [
+					$propertyValue,
+					$getter,
+				], isset( $getter_params[ $property ] ) ? $getter_params[ $property ] : [] ) ) === null
+			) {
+				return null;
+			}
         }
         return $propertyValue;
     }
-    
+
     /**
-     * 
+     *
      * @param \PhpAbac\Model\EnvironmentAttribute $attribute
      * @return mixed
      */
     private function retrieveEnvironmentAttribute(EnvironmentAttribute $attribute) {
         return getenv($attribute->getVariableName());
     }
-    
+
     /*
      * @param string $name
      * @return string

@@ -7,9 +7,9 @@ use PhpAbac\Model\PolicyRuleAttribute;
 
 class PolicyRuleManager
 {
-    /** @var \PhpAbac\Manager\AttributeManager **/
+    /** @var \PhpAbac\Manager\AttributeManager * */
     private $attributeManager;
-    /** @var array **/
+    /** @var array * */
     private $rules;
 	/** @var array **/
     public $ruleKeys;
@@ -27,12 +27,12 @@ class PolicyRuleManager
 
     /**
      * @param string $ruleName
-     *
-     * @return PolicyRule
-     *
+     * @param object $user
+     * @param object $resource
+     * @return PolicyRule[]
      * @throws \InvalidArgumentException
      */
-    public function getRule($ruleName)
+     public function getRule($ruleName)
     {
         if(!isset($this->rules[$ruleName])) {
             throw new \InvalidArgumentException('The given rule "' . $ruleName . '" is not configured');
@@ -47,13 +47,15 @@ class PolicyRuleManager
         }
         return $rule;
     }
-    
+
     /**
      * This method is meant to convert attribute data from array to formatted policy rule attribute
-     * 
+     *
      * @param array $attributes
+     * @param object $user
+     * @param object $resource
      */
-    public function processRuleAttributes($attributes) {
+   public function processRuleAttributes($attributes) {
         foreach($attributes as $attributeName => $attribute) {
             $pra = (new PolicyRuleAttribute())
                 ->setAttribute($this->attributeManager->getAttribute($attributeName))
@@ -70,6 +72,25 @@ class PolicyRuleManager
             }
             // This generator avoid useless memory consumption instead of returning a whole array
             yield $pra;
+        }
+    }
+
+    /**
+     * This method is meant to set appropriated extra data to $pra depending on comparison type
+     *
+     * @param PolicyRuleAttribute $pra
+     * @param object $user
+     * @param object $resource
+     */
+    public function processRuleAttributeComparisonType(PolicyRuleAttribute $pra, $user, $resource)
+    {
+        switch ($pra->getComparisonType()) {
+            case 'user':
+                $pra->setExtraData(['user' => $user]);
+                break;
+            case 'object':
+                $pra->setExtraData(['resource' => $resource]);
+                break;
         }
     }
 }

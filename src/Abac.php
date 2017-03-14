@@ -100,41 +100,43 @@ class Abac
                 return $cacheValue;
             }
         }
-        $policyRule = $this->policyRuleManager->getRule($ruleName);
+        $policyRule_a = $this->policyRuleManager->getRule( $ruleName, $user, $resource );				
 		
-        // For each policy rule attribute, we retrieve the attribute value and proceed configured extra data
-        foreach ($policyRule->getPolicyRuleAttributes() as $pra) {
+		foreach ($policyRule_a->getPolicyRuleAttributes() as $pra ) {
+
 			$attribute = $pra->getAttribute();
-			
-			$attribute->setValue($this->attributeManager->retrieveAttribute($attribute, $user, $resource));
-            if(count($pra->getExtraData()) > 0) {
-                $this->processExtraData($pra, $user, $resource);
-            }
-			
+
+			$getter_params = $this->prepareGetterParams($pra->getGetterParams(), $user, $resource);
+			$attribute->setValue( $this->attributeManager->retrieveAttribute( $attribute, $user, $resource, $getter_params ) );				
+
+			if(count($pra->getExtraData()) > 0) {
+				$this->processExtraData($pra, $user, $resource);
+			}
+
 			// Get the extra data attributes for a rule
-			$extraData = $pra->getExtraData();
-						
+			$extraData = $pra->getExtraData();			
+
 			// Assess if comparison_operand exists and if it evaluates bitwise to 'or'
 			if(isset($extraData['comparison_operand']) && $extraData['comparison_operand'] === 'or') {
-				$comparisonTest = $this->comparisonManager->compare($pra);
-				
+				$comparisonTest = $this->comparisonManager->compare($pra);				
+
 				// If the comparison test returns TRUE, unset the rejected elements and 
 				// exit the loop by returning TRUE
 				if($comparisonTest === TRUE) {
 					$this->comparisonManager->unsetRejected();
-					
+
 					if($cacheResult) {
 						$cacheItem->set(TRUE);
 						$this->cacheManager->save($cacheItem);
 					}
-					
+
 					return TRUE;
 				}				
 			}
 			else { // Otherwise continue as normal in compounding rules
 				$this->comparisonManager->compare($pra);
 			}
-        }
+		}
         // The given result could be an array of rejected attributes or true
         // True means that the rule is correctly enforced for the given user and resource
         $result = $this->comparisonManager->getResult();
@@ -161,9 +163,12 @@ class Abac
                     // The "with" extra data is an array of attributes, which are objects
                     // Once we process it as policy rule attributes, we set it as the main policy rule attribute value
                     $subPolicyRuleAttributes = [];
-                    foreach($this->policyRuleManager->processRuleAttributes($data) as $subPolicyRuleAttribute) {
-                        $subPolicyRuleAttributes[] = $subPolicyRuleAttribute;
-                    }
+					$extraData               = [];
+					
+                    foreach ( $this->policyRuleManager->processRuleAttributes( $data, $user, $resource ) as $subPolicyRuleAttribute ) {
+						$subPolicyRuleAttributes[] = $subPolicyRuleAttribute;
+					}
+					
                     $pra->setValue($subPolicyRuleAttributes);
                     // This data can be used in complex comparisons
                     $pra->addExtraData('attribute', $pra->getAttribute());
@@ -181,4 +186,36 @@ class Abac
 	public function getPolicyRuleManagerRuleKeys() {
 		return $this->policyRuleManager->ruleKeys;
 	}
+	
+	/**
+	 * Function to prepare Getter Params when getter require parameters ( this parameters must be specified in configuration file)
+	 *
+	 * @param $getter_params
+	 * @param $user
+	 * @param $resource
+	 *
+	 * @return array
+	 */
+	private function prepareGetterParams($getter_params, $user, $resource) {
+		if (empty($getter_params)) return [];
+		$values = [];
+		foreach($getter_params as $getter_name=>$params) {
+			foreach($params as $param) {
+				if ( '@' !== $param[ 'param_name' ][ 0 ] ) {
+					$values[$getter_name][] = $param[ 'param_value' ];
+				}
+				else {
+					$values[$getter_name][] = $this->attributeManager->retrieveAttribute( $this->attributeManager->getAttribute( $param[ 'param_value' ] ) , $user, $resource );
+				}
+			}
+		}
+		return $values;
+	}
+	
+	/**
+	 * @param \PhpAbac\Model\PolicyRuleAttribute $pra
+	 * @param object                             $user
+	 * @param object                             $resource
+	 */
+	
 }

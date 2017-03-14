@@ -12,10 +12,12 @@ use Symfony\Component\Config\Loader\FileLoader;
  * @link http://github.com/adjustit/php-abac
  */
 
-class MysqlAbacLoader extends FileLoader
+class MysqlAbacLoader extends AbacLoader
 {
     
     private $CI;
+	
+	protected static $_EXTENSION_ALLOWED_A = [''];
     
     /**
      * build our ABAC MySQL object up via Symfony FileLoader
