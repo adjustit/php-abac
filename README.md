@@ -1,15 +1,9 @@
-[Kilix] php-abac
+ADJUSTit+ php-abac [forked from Kilix]
 ========
 
 ### Attribute-Based Access Control implementation library
 
-[![Latest Stable Version](https://poser.pugx.org/kilix/php-abac/v/stable)](https://packagist.org/packages/kilix/php-abac)
-[![Latest Unstable Version](https://poser.pugx.org/kilix/php-abac/v/unstable)](https://packagist.org/packages/kilix/php-abac)
-[![Build Status](https://travis-ci.org/Kilix/php-abac.svg?branch=master)](https://travis-ci.org/Kilix/php-abac)
-[![Code Coverage](https://scrutinizer-ci.com/g/Kilix/php-abac/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/Kilix/php-abac/?branch=master)
-[![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/Kilix/php-abac/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/Kilix/php-abac/?branch=master)
-[![Total Downloads](https://poser.pugx.org/kilix/php-abac/downloads)](https://packagist.org/packages/kilix/php-abac)
-[![License](https://poser.pugx.org/kilix/php-abac/license)](https://packagist.org/packages/kilix/php-abac)
+(https://packagist.org/packages/adjustit/php-abac)
 
 Introduction
 ------------
@@ -36,7 +30,7 @@ Write the following line in your composer.json file :
 
 ```json
 "require" : {
-    "kilix/php-abac": "dev-master"
+    "adjustit/php-abac": "dev-master"
 }
 ```
 
@@ -274,8 +268,3 @@ If you want to contribute, don't hesitate to fork the library and submit Pull Re
 You can also report issues, suggest enhancements, feel free to give advices and your feedback about this library.
 
 It's not finished yet, there's still a lot of features to implement to make it better. If you want to be a part of this library improvement, let us know  !
-
-See also
---------
-
-* [Symfony bundle to support this library](https://github.com/Kilix/abac-bundle)
