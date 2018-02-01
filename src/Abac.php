@@ -110,9 +110,14 @@ class Abac
 			$getter_params = $this->prepareGetterParams($pra->getGetterParams(), $user, $resource);
 			$attribute->setValue( $this->attributeManager->retrieveAttribute( $attribute, $user, $resource, $getter_params ) );				
 
-			if(count($pra->getExtraData()) > 0) {
-				$this->processExtraData($pra, $user, $resource);
-			}
+            # PHP7.2 - count(): Parameter must be an array or an object that implements Countable
+            # NOTE: https://github.com/yiisoft/yii/issues/4167
+            # NOTE: https://wiki.php.net/rfc/counting_non_countables
+            if($pra->getExtraData() !== NULL){ # Minor fix
+                if(count($pra->getExtraData()) > 0) {
+                    $this->processExtraData($pra, $user, $resource);
+                }
+            }
 
 			// Get the extra data attributes for a rule
 			$extraData = $pra->getExtraData();			
